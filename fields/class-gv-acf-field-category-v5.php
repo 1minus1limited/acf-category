@@ -33,6 +33,9 @@ class gv_acf_field_category extends acf_field {
 		$this->name = 'category';
 
 
+		$this->taxonomy_ids = [];
+
+
 		/*
 		*  label (string) Multiple words, can include spaces, visible when selecting a field type
 		*/
@@ -164,7 +167,7 @@ class gv_acf_field_category extends acf_field {
 		// echo $site_options->field('webhook_token');
 		$ch = curl_init();
 		$curlConfig = array(
-		    CURLOPT_URL => $site_options->field('spree_endpoint') . $field['api_resource'] . "/?per_page=1000&token=" . $site_options->field('webhook_token')
+		    CURLOPT_URL => $site_options->field('spree_endpoint') . $field['api_resource'] . "/?per_page=1&page=1&token=" . $site_options->field('webhook_token')
 		);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 		curl_setopt_array($ch, $curlConfig);
@@ -185,8 +188,53 @@ class gv_acf_field_category extends acf_field {
 
 		$selected = $field['value'];
 
+		// echo  $site_options->field('spree_endpoint')  . "taxonomies/". $this->taxonomy_id . "/taxons/" . $selected ."/?token=" . $site_options->field('webhook_token');
+		// die();
+
+
+		if($selected && !isset($this->taxons[$selected])){
+
+
+				$ch = curl_init();
+				$curlConfig = array(
+				    CURLOPT_URL => $site_options->field('spree_endpoint')  . "taxonomies/?token=" . $site_options->field('webhook_token')
+				);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+				curl_setopt_array($ch, $curlConfig);
+				$result = curl_exec($ch);
+				curl_close($ch);
+
+				$taxonomies = json_decode($result, true)['taxonomies'];
+
+			foreach ($taxonomies as $index => $taxonomy) {
+				array_push($this->taxonomy_ids, $taxonomy['id']);
+				$this->taxonomy_ids = array_unique($this->taxonomy_ids);
+			}
+
+
+
+	
+			foreach ($this->taxonomy_ids as $index => $taxonomy_id) {
+				# code...
+				$ch = curl_init();
+				$curlConfig = array(
+				    CURLOPT_URL => $site_options->field('spree_endpoint')  . "taxonomies/". $taxonomy_id . "/taxons/" . $selected ."/?token=" . $site_options->field('webhook_token')
+				);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+				curl_setopt_array($ch, $curlConfig);
+				$result = curl_exec($ch);
+				$result = json_decode($result, true);
+				curl_close($ch);
+				
+				if(isset($result['id'])){
+					$this->taxons[$result['id']] = $result['pretty_name'];
+					break;
+				}
+			}
+		}
+
 		if (($key = array_search($selected , $product_selected_ids)) !== false) {
-    	unset($product_selected_ids[$key]);
+    		unset($product_selected_ids[$key]);
 		}
 
 		$product_selected_ids_string = implode("-",$product_selected_ids);
@@ -194,13 +242,14 @@ class gv_acf_field_category extends acf_field {
 		?>
 
 
-
-		<select name="<?php echo esc_attr($field['name']) ?>" data-product_ids="<?= $product_selected_ids_string ?>" class="<?php echo $field['wrapper']['class'] ?>" data-identifier="row_category_parent" data-category="<?= $selected ?>" onchange="update_associated_product_fields(this.value,'<?php echo $field['wrapper']['class'] ?>')">
+		<div class="category_loader_overlay" ></div>
+		<select size="5" data-url="<?= $site_options->field('spree_endpoint') . 'taxons/?per_page=1&token=' . $site_options->field('webhook_token') ?>" data-page="2" data-type="category"  name="<?php echo esc_attr($field['name']) ?>" data-product_ids="<?= $product_selected_ids_string ?>" class="<?php echo $field['wrapper']['class'] ?>" data-identifier="row_category_parent" data-category="<?= $selected ?>" onchange="update_associated_product_fields(this.value,'<?php echo $field['wrapper']['class'] ?>')">
 			<option selected=""></option>
 			<?php foreach ($this->taxons as $key => $value) { ?>
 				<option <?php echo $key == $selected ? 'selected' : ''  ?> value="<?= $key ?>" > <?= $value ?> </option>
 			<?php } ?>
 		</select>
+		<div class="loader" ></div>
 
 		<?php // echo get_post_meta($post->ID, 'category_select_product_1', true) ?>
  <?php
@@ -224,6 +273,7 @@ class gv_acf_field_category extends acf_field {
 			// echo $value['pretty_name'];
 			// code...
 			$this->taxons[$value['id']] = $value['pretty_name'];
+			
 			if(count($value['taxons']) > 0 ){
 
 				 $this->create_flat_taxon_array($value['taxons']);
