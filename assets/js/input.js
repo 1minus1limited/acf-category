@@ -4,7 +4,9 @@ function update_associated_product_fields(value,class_name){
 
 function loadProducts(value,class_name , product_ids_string = null ){
 	var selected_set = false;
+	jQuery("."+class_name).attr('data-category', value);
 	jQuery("."+class_name+"_product").find('select').attr('size', '5');
+	jQuery("."+class_name+"_product").attr('data-category', value);
 	jQuery("."+class_name+"_product").find('select').find('option').remove();
 	if(!product_ids_string){
 		product_ids_string = "";
@@ -152,24 +154,25 @@ function loadProducts(value,class_name , product_ids_string = null ){
 
 
 
-				jQuery("."+class_name+"_product").find('select').on('scroll', function(){
+				jQuery("."+class_name+"_product").find('select').on('scroll', function(e){
 				    var sel = $(this);
-				    var lasto = sel.find('option:last');
-				    var s = sel.position().top + sel.height();
-				    var o = lasto.height() + lasto.position().top - 1;
+				    category_id = $("."+class_name).attr('data-category');
+
+
 			      	var data_url = endpointDetails.ajax_url+'taxons/products?id='+category_id+'&per_page=10&token='+endpointDetails.ajax_token;
 			      	var data_offset = $(this).data('page');	
 			      	var data_type = $(this).data('type');	
-			      	
+			  		var elem = $(e.currentTarget);
+	
+				    if (elem[0].scrollHeight - elem.scrollTop() <= elem.outerHeight()) 
+    				{
 				    
-				      if(o < s){
+				   
 				        sel.siblings('.category_loader_overlay').show();
 
 				      	sel.siblings('.loader').show();
 
-				      	console.log(data_url);
-				      	console.log(data_offset);
-				      	console.log(data_type);
+			
 
 				      	data_url = data_url + "&page=" +data_offset;
 						sel.data('page',parseInt(data_offset) + 1);
