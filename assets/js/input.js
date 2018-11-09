@@ -6,6 +6,7 @@ function loadProducts(value,class_name , product_ids_string = null ){
 	var selected_set = false;
 	jQuery("."+class_name).attr('data-category', value);
 	jQuery("."+class_name+"_product").find('select').attr('size', '5');
+	jQuery("."+class_name+"_product").find('select').data('page', '2');
 	jQuery("."+class_name+"_product").attr('data-category', value);
 	jQuery("."+class_name+"_product").find('select').find('option').remove();
 	if(!product_ids_string){
@@ -37,7 +38,7 @@ function loadProducts(value,class_name , product_ids_string = null ){
 								}
 							});
 
-							if(selected_set == false){
+							if(selected_set == false && product_ids_string != ""){
 								jQuery.ajax({
 									url: endpointDetails.ajax_url + 'products/' + product_ids[index] + '?token='+endpointDetails.ajax_token,
 									type: 'GET',
@@ -49,19 +50,11 @@ function loadProducts(value,class_name , product_ids_string = null ){
 									}
 								});
 							}
-								// .val(product_ids[index]).change();
 						});
 
 
 
 				}
-
-
-
-			// select_option(endpointDetails.product_1, "category_select_product_1");
-			// select_option(endpointDetails.product_2, "category_select_product_2");
-			// select_option(endpointDetails.product_3, "category_select_product_3");
-			// select_option(endpointDetails.product_4, "category_select_product_4");
 			}
 		});
 }
@@ -146,10 +139,10 @@ function loadProducts(value,class_name , product_ids_string = null ){
       $('.loader').hide();
 
 		$('*[data-identifier="row_category_parent"]').each(function(){
-		  var	category_id = $(this).data('category');
+		    var	category_id = $(this).data('category');
 			var product_ids = $(this).data('product_ids');
 			var class_name = $(this).attr('class');
-			jQuery("."+class_name+"_product").find('select').data('page',"1");
+			jQuery("."+class_name+"_product").find('select').data('page',"2");
 			jQuery("."+class_name+"_product").find('select').data('type',"product");
 
 
@@ -160,7 +153,7 @@ function loadProducts(value,class_name , product_ids_string = null ){
 
 
 			      	var data_url = endpointDetails.ajax_url+'taxons/products?id='+category_id+'&per_page=10&token='+endpointDetails.ajax_token;
-			      	var data_offset = $(this).data('page');	
+			      	var data_offset =$(this).data('page');	
 			      	var data_type = $(this).data('type');	
 			  		var elem = $(e.currentTarget);
 	
@@ -172,9 +165,9 @@ function loadProducts(value,class_name , product_ids_string = null ){
 
 				      	sel.siblings('.loader').show();
 
-			
+						console.log(data_offset);
 
-				      	data_url = data_url + "&page=" +data_offset;
+				      	data_url = data_url + "&page=" +String(data_offset);
 						sel.data('page',parseInt(data_offset) + 1);
 
 						jQuery.ajax({
@@ -223,16 +216,15 @@ function loadProducts(value,class_name , product_ids_string = null ){
       	var data_url = $(this).data('url');
       	var data_offset = $(this).data('page');	
       	var data_type = $(this).data('type');	
-      	
 	    
 	      if(o < s){
+      		console.log(data_offset);
+
 	        sel.siblings('.category_loader_overlay').show();
 
 	      	sel.siblings('.loader').show();
 
-	      	console.log(data_url);
-	      	console.log(data_offset);
-	      	console.log(data_type);
+
 
 	      	data_url = data_url + "&page=" +data_offset;
 			sel.data('page',parseInt(data_offset) + 1);
@@ -280,7 +272,7 @@ function loadProducts(value,class_name , product_ids_string = null ){
 			// code...
 			// taxons[value['id']] = value['pretty_name'];
 			sel.append('<option   value="'+value.id+'" >'+value.pretty_name+'</option>');
-			console.log(value);
+			// console.log(value);
 			if(value.taxons.length > 0 ){
 				create_cat_flat_taxon_array(value.taxons,sel);
 			}
