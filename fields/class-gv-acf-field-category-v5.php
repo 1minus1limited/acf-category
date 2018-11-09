@@ -157,6 +157,7 @@ class gv_acf_field_category extends acf_field {
 		   array_push($product_selected_ids , get_field($value->post_excerpt));
 	 }
 
+	 $product_selected_ids = array_filter($product_selected_ids);
 
 
 		// echo '</pre>';
